@@ -14,6 +14,7 @@ navec = Navec.load(path)
 device = 'cpu'
 max_text_len = 945
 max_token_len = 42
+# model-epoch=10-val_loss=0.02-val_accuracy=0.99.ckpt
 
 
 class CustomConv1D(nn.Module):
@@ -236,5 +237,5 @@ def predictStyleForTextEmb(text, model):
 
 
 def predictEmb(text):
-    model = load_pretrained_model_emb("models/model_embeddings.ckpt")
+    model = load_pretrained_model_emb("models/model_embeddings_0_99.ckpt")
     return predictStyleForTextEmb(text, model)

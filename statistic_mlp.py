@@ -25,7 +25,7 @@ class FeatureExtractionModule:
         else:
             dataframe = pd.read_csv(csv_file_path, sep=';', encoding="cp1251", header=1).dropna().reset_index(drop=True)
         dataframe.loc[:, "Style"] = dataframe.loc[:, "Style"].astype(
-            'category').cat.codes  # Style from string to int categories
+            'category').cat.codes
         dataframe_rows = dataframe.shape[0]
 
         dataset = pd.DataFrame()
@@ -338,7 +338,7 @@ def predict(text):
         model_params = pickle.load(file)
 
     scaler = joblib.load('models/mlp_scaler.pkl')
-    checkpoint = 'models/model-epoch_40-val_loss_0_11-val_accuracy_0_95.ckpt'
+    checkpoint = 'models/model_mlp_0_93.ckpt'
     network = load_pretrained_model(model_params, checkpoint)
     feature_extraction = FeatureExtractionModule()
     features_indexes = [4, 0, 12, 5, 7, 3, 11, 10, 2, 18, 19, 14, 6, 9, 15, 21, 8, 20, 13, 1, 16, 17]

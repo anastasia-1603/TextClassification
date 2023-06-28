@@ -369,7 +369,7 @@ def modelPredict(model, text, feature_extraction, scaler, features):
 
 
 def predict(text, mode):
-    scaler = joblib.load('scaler.pkl')
+    scaler = joblib.load('models/scaler.pkl')
     feature_extraction = FeatureExtractionModule()
     bee = BestEstimatorExtraction(None, None)
     proba = None
