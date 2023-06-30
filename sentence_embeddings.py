@@ -7,6 +7,7 @@ from slovnet.model.emb import NavecEmbedding
 from torch import nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import random_split, DataLoader
+from sentence import CustomConv1D, TokenCNN, ClassificationHead
 
 path = 'navec_hudlit_v1_12B_500K_300d_100q.tar'
 navec = Navec.load(path)
@@ -14,87 +15,86 @@ navec = Navec.load(path)
 device = 'cpu'
 max_text_len = 945
 max_token_len = 42
-# model-epoch=10-val_loss=0.02-val_accuracy=0.99.ckpt
 
 
-class CustomConv1D(nn.Module):
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 kernel_size: int,
-                 dilation: int):
-        super().__init__()
-        self.conv1d = nn.Conv1d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=1,
-                                padding=kernel_size // 2, dilation=dilation)
-        self.activation = nn.LeakyReLU(0.2)
-
-    def forward(self, x):
-        x = self.conv1d(x)
-        x = self.activation(x)
-        return x
-
-
-class TokenCNN(nn.Module):
-    def __init__(self,
-                 in_embed_size: int,
-                 context_embed_size: int):
-        super().__init__()
-        self.conv_1_1 = CustomConv1D(in_channels=in_embed_size, out_channels=context_embed_size, kernel_size=7,
-                                     dilation=1)
-        self.conv_1_2 = CustomConv1D(in_channels=context_embed_size, out_channels=context_embed_size, kernel_size=3,
-                                     dilation=1)
-        self.pooling_1 = nn.MaxPool1d(kernel_size=3, stride=3)
-
-        self.conv_2_1 = CustomConv1D(in_channels=context_embed_size, out_channels=context_embed_size, kernel_size=7,
-                                     dilation=1)
-        self.conv_2_2 = CustomConv1D(in_channels=context_embed_size, out_channels=context_embed_size, kernel_size=3,
-                                     dilation=1)
-        self.pooling_2 = nn.MaxPool1d(kernel_size=3, stride=3)
-
-        self.conv_3_1 = CustomConv1D(in_channels=context_embed_size, out_channels=context_embed_size, kernel_size=7,
-                                     dilation=1)
-        self.conv_3_2 = CustomConv1D(in_channels=context_embed_size, out_channels=context_embed_size, kernel_size=3,
-                                     dilation=1)
-        self.pooling_3 = nn.MaxPool1d(kernel_size=3, stride=3)
-
-        self.conv_4_1 = CustomConv1D(in_channels=context_embed_size, out_channels=context_embed_size, kernel_size=7,
-                                     dilation=1)
-        self.conv_4_2 = CustomConv1D(in_channels=context_embed_size, out_channels=context_embed_size, kernel_size=3,
-                                     dilation=1)
-        self.pooling_4 = nn.MaxPool1d(kernel_size=3, stride=3)
-
-    def forward(self, x):
-        x = self.conv_1_1(x)
-        x = x + self.conv_1_2(x)
-        x = self.pooling_1(x)
-
-        x = self.conv_2_1(x)
-        x = x + self.conv_2_2(x)
-        x = self.pooling_2(x)
-
-        x = self.conv_3_1(x)
-        x = x + self.conv_3_2(x)
-        x = self.pooling_3(x)
-
-        x = self.conv_4_1(x)
-        x = x + self.conv_4_2(x)
-        x = self.pooling_4(x)
-        return x
+# class CustomConv1D(nn.Module):
+#     def __init__(self,
+#                  in_channels: int,
+#                  out_channels: int,
+#                  kernel_size: int,
+#                  dilation: int):
+#         super().__init__()
+#         self.conv1d = nn.Conv1d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=1,
+#                                 padding=kernel_size // 2, dilation=dilation)
+#         self.activation = nn.LeakyReLU(0.2)
+#
+#     def forward(self, x):
+#         x = self.conv1d(x)
+#         x = self.activation(x)
+#         return x
 
 
-class ClassificationHead(nn.Module):
-    def __init__(self,
-                 in_features: int,
-                 out_features: int,
-                 dropout: float):
-        super().__init__()
-        self.dropout = nn.Dropout(dropout)
-        self.classifier = nn.Linear(in_features=in_features, out_features=out_features)
+# class TokenCNN(nn.Module):
+#     def __init__(self,
+#                  in_embed_size: int,
+#                  context_embed_size: int):
+#         super().__init__()
+#         self.conv_1_1 = CustomConv1D(in_channels=in_embed_size, out_channels=context_embed_size, kernel_size=7,
+#                                      dilation=1)
+#         self.conv_1_2 = CustomConv1D(in_channels=context_embed_size, out_channels=context_embed_size, kernel_size=3,
+#                                      dilation=1)
+#         self.pooling_1 = nn.MaxPool1d(kernel_size=3, stride=3)
+#
+#         self.conv_2_1 = CustomConv1D(in_channels=context_embed_size, out_channels=context_embed_size, kernel_size=7,
+#                                      dilation=1)
+#         self.conv_2_2 = CustomConv1D(in_channels=context_embed_size, out_channels=context_embed_size, kernel_size=3,
+#                                      dilation=1)
+#         self.pooling_2 = nn.MaxPool1d(kernel_size=3, stride=3)
+#
+#         self.conv_3_1 = CustomConv1D(in_channels=context_embed_size, out_channels=context_embed_size, kernel_size=7,
+#                                      dilation=1)
+#         self.conv_3_2 = CustomConv1D(in_channels=context_embed_size, out_channels=context_embed_size, kernel_size=3,
+#                                      dilation=1)
+#         self.pooling_3 = nn.MaxPool1d(kernel_size=3, stride=3)
+#
+#         self.conv_4_1 = CustomConv1D(in_channels=context_embed_size, out_channels=context_embed_size, kernel_size=7,
+#                                      dilation=1)
+#         self.conv_4_2 = CustomConv1D(in_channels=context_embed_size, out_channels=context_embed_size, kernel_size=3,
+#                                      dilation=1)
+#         self.pooling_4 = nn.MaxPool1d(kernel_size=3, stride=3)
+#
+#     def forward(self, x):
+#         x = self.conv_1_1(x)
+#         x = x + self.conv_1_2(x)
+#         x = self.pooling_1(x)
+#
+#         x = self.conv_2_1(x)
+#         x = x + self.conv_2_2(x)
+#         x = self.pooling_2(x)
+#
+#         x = self.conv_3_1(x)
+#         x = x + self.conv_3_2(x)
+#         x = self.pooling_3(x)
+#
+#         x = self.conv_4_1(x)
+#         x = x + self.conv_4_2(x)
+#         x = self.pooling_4(x)
+#         return x
 
-    def forward(self, x):
-        x = self.dropout(x)
-        x = self.classifier(x)
-        return x
+
+# class ClassificationHead(nn.Module):
+#     def __init__(self,
+#                  in_features: int,
+#                  out_features: int,
+#                  dropout: float):
+#         super().__init__()
+#         self.dropout = nn.Dropout(dropout)
+#         self.classifier = nn.Linear(in_features=in_features, out_features=out_features)
+#
+#     def forward(self, x):
+#         x = self.dropout(x)
+#         x = self.classifier(x)
+#         return x
 
 
 class Network(nn.Module):

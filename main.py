@@ -157,8 +157,7 @@ def get_style(mode, type, text):
         prob = statistic.predict(text, type)
     else:
         if type == "Word Embeddings":
-            from sentence_embeddings import Network, TokenCNN, ModelCompilation, \
-                ClassificationHead, CustomConv1D, DataModule, predictEmb
+            from sentence_embeddings import Network, ModelCompilation, DataModule, predictEmb
 
             prob = predictEmb(text)
         else:
